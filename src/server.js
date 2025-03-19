@@ -8,7 +8,9 @@ connectDB();
 
 // Configurar CORS
 fastify.register(cors, {
-  origin: true
+  origin: ['https://api-gateway-bg.vercel.app', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
 });
 
 // Registrar rutas
