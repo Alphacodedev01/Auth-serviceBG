@@ -11,10 +11,12 @@ const register = async (request, reply) => {
     const { email, password, nombre, cedula, edad, telefono, direccion } = request.body;
 
     // Crear usuario en Firebase
-    await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const firebaseUid = userCredential.user.uid;
 
-    // Guardar usuario en MongoDB sin el UID de Firebase
+    // Crear usuario en MongoDB
     const user = new User({
+      firebaseUid,
       email,
       nombre,
       cedula,
@@ -23,16 +25,20 @@ const register = async (request, reply) => {
       direccion
     });
 
-    await user.save();
+    console.log("Guardando usuario en MongoDB...", user);
+await user.save();
+console.log("Usuario guardado correctamente en MongoDB.");
 
-    return reply.code(201).send({
+
+    return {
       statusCode: 201,
       message: 'Usuario registrado exitosamente',
       user: {
+        uid: firebaseUid,
         email,
         nombre
       }
-    });
+    };
   } catch (error) {
     console.error('Error en registro:', error);
     return reply.code(400).send({
@@ -47,9 +53,10 @@ const login = async (request, reply) => {
   try {
     const { email, password } = request.body;
 
-    await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUid = userCredential.user.uid;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ firebaseUid });
 
     if (!user) {
       return reply.code(404).send({
@@ -59,14 +66,15 @@ const login = async (request, reply) => {
       });
     }
 
-    return reply.code(200).send({
+    return {
       statusCode: 200,
       message: 'Login exitoso',
       user: {
+        uid: firebaseUid,
         email: user.email,
         nombre: user.nombre
       }
-    });
+    };
   } catch (error) {
     console.error('Error en login:', error);
     return reply.code(401).send({
@@ -82,10 +90,10 @@ const resetPassword = async (request, reply) => {
     const { email } = request.body;
     await sendPasswordResetEmail(auth, email);
 
-    return reply.code(200).send({
+    return {
       statusCode: 200,
       message: 'Correo de restablecimiento enviado'
-    });
+    };
   } catch (error) {
     console.error('Error en reset password:', error);
     return reply.code(400).send({
@@ -98,8 +106,8 @@ const resetPassword = async (request, reply) => {
 
 const getUserProfile = async (request, reply) => {
   try {
-    const { email } = request.params;
-    const user = await User.findOne({ email });
+    const { uid } = request.params;
+    const user = await User.findOne({ firebaseUid: uid });
 
     if (!user) {
       return reply.code(404).send({
@@ -109,7 +117,7 @@ const getUserProfile = async (request, reply) => {
       });
     }
 
-    return reply.code(200).send({
+    return {
       statusCode: 200,
       user: {
         email: user.email,
@@ -119,7 +127,7 @@ const getUserProfile = async (request, reply) => {
         telefono: user.telefono,
         direccion: user.direccion
       }
-    });
+    };
   } catch (error) {
     console.error('Error al obtener perfil:', error);
     return reply.code(500).send({
