@@ -11,9 +11,9 @@ const register = async (request, reply) => {
     const { email, password, nombre, cedula, edad, telefono, direccion } = request.body;
 
     // Crear usuario en Firebase
-    const userCredential = await createUserWithEmailAndPassword(email, password);
-    
-    // Crear usuario en MongoDB
+    await createUserWithEmailAndPassword(auth, email, password);
+
+    // Guardar usuario en MongoDB sin el UID de Firebase
     const user = new User({
       email,
       nombre,
@@ -23,19 +23,16 @@ const register = async (request, reply) => {
       direccion
     });
 
-    console.log("Guardando usuario en MongoDB...", user);
-await user.save();
-console.log("Usuario guardado correctamente en MongoDB.");
+    await user.save();
 
-
-    return {
+    return reply.code(201).send({
       statusCode: 201,
       message: 'Usuario registrado exitosamente',
       user: {
         email,
         nombre
       }
-    };
+    });
   } catch (error) {
     console.error('Error en registro:', error);
     return reply.code(400).send({
@@ -50,10 +47,9 @@ const login = async (request, reply) => {
   try {
     const { email, password } = request.body;
 
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const firebaseUid = userCredential.user.uid;
+    await signInWithEmailAndPassword(auth, email, password);
 
-    const user = await User.findOne({ firebaseUid });
+    const user = await User.findOne({ email });
 
     if (!user) {
       return reply.code(404).send({
@@ -63,15 +59,14 @@ const login = async (request, reply) => {
       });
     }
 
-    return {
+    return reply.code(200).send({
       statusCode: 200,
       message: 'Login exitoso',
       user: {
-        uid: firebaseUid,
         email: user.email,
         nombre: user.nombre
       }
-    };
+    });
   } catch (error) {
     console.error('Error en login:', error);
     return reply.code(401).send({
@@ -87,10 +82,10 @@ const resetPassword = async (request, reply) => {
     const { email } = request.body;
     await sendPasswordResetEmail(auth, email);
 
-    return {
+    return reply.code(200).send({
       statusCode: 200,
       message: 'Correo de restablecimiento enviado'
-    };
+    });
   } catch (error) {
     console.error('Error en reset password:', error);
     return reply.code(400).send({
@@ -103,8 +98,8 @@ const resetPassword = async (request, reply) => {
 
 const getUserProfile = async (request, reply) => {
   try {
-    const { uid } = request.params;
-    const user = await User.findOne({ firebaseUid: uid });
+    const { email } = request.params;
+    const user = await User.findOne({ email });
 
     if (!user) {
       return reply.code(404).send({
@@ -114,7 +109,7 @@ const getUserProfile = async (request, reply) => {
       });
     }
 
-    return {
+    return reply.code(200).send({
       statusCode: 200,
       user: {
         email: user.email,
@@ -124,7 +119,7 @@ const getUserProfile = async (request, reply) => {
         telefono: user.telefono,
         direccion: user.direccion
       }
-    };
+    });
   } catch (error) {
     console.error('Error al obtener perfil:', error);
     return reply.code(500).send({
