@@ -26,19 +26,18 @@ const register = async (request, reply) => {
     });
 
     console.log("Guardando usuario en MongoDB...", user);
-await user.save();
-console.log("Usuario guardado correctamente en MongoDB.");
+    await user.save();
+    console.log("Usuario guardado correctamente en MongoDB.");
 
+    // Enviar datos al API Gateway
+    const response = await axios.post(`${process.env.API_GATEWAY_URL}/api/auth/register`, {
+      uid: firebaseUid,
+      email,
+      nombre
+    });
 
-    return {
-      statusCode: 201,
-      message: 'Usuario registrado exitosamente',
-      user: {
-        uid: firebaseUid,
-        email,
-        nombre
-      }
-    };
+    // Devolver la respuesta del API Gateway al cliente
+    return reply.code(response.status).send(response.data);
   } catch (error) {
     console.error('Error en registro:', error);
     return reply.code(400).send({
