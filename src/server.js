@@ -20,6 +20,7 @@ fastify.setErrorHandler(function (error, request, reply) {
 fastify.register(cors, {
   origin: ['https://api-gateway-bg.vercel.app', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 });
 
@@ -32,10 +33,10 @@ fastify.get('/', async () => {
     endpoints: {
       health: '/health',
       auth: {
-        register: '/auth/register',
-        login: '/auth/login',
-        resetPassword: '/auth/reset-password',
-        profile: '/auth/profile/:uid'
+        register: '/auth/register [POST]',
+        login: '/auth/login [POST]',
+        resetPassword: '/auth/reset-password [POST]',
+        profile: '/auth/profile/:uid [GET]'
       }
     }
   };
