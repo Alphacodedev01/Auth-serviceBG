@@ -42,11 +42,17 @@ const resetPasswordSchema = {
   }
 };
 
-async function routes(fastify, options) {
+const routes = async (fastify, options) => {
+  // Ruta de prueba
+  fastify.get('/test', async () => {
+    return { status: 'ok', message: 'Auth routes working' };
+  });
+
+  // Rutas de autenticación
   fastify.post('/register', { schema: registerSchema }, register);
   fastify.post('/login', { schema: loginSchema }, login);
   fastify.post('/reset-password', { schema: resetPasswordSchema }, resetPassword);
   fastify.get('/profile/:uid', getUserProfile);
-}
+};
 
 module.exports = routes;
