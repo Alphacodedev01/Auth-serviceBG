@@ -23,6 +23,24 @@ fastify.register(cors, {
   credentials: true
 });
 
+// Ruta raíz
+fastify.get('/', async () => {
+  return {
+    status: 'ok',
+    service: 'BeautiGo Auth Service',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      auth: {
+        register: '/auth/register',
+        login: '/auth/login',
+        resetPassword: '/auth/reset-password',
+        profile: '/auth/profile/:uid'
+      }
+    }
+  };
+});
+
 // Registrar rutas
 fastify.register(require('./routes/auth'), { prefix: '/auth' });
 
@@ -44,19 +62,15 @@ const start = async () => {
     // Conectar a MongoDB
     await connectDB();
     
-    // En Vercel, no necesitamos escuchar en un puerto específico
-    if (process.env.VERCEL) {
-      console.log('Running on Vercel, skipping listen');
-      return;
-    }
-
     // Para desarrollo local
-    const port = process.env.PORT || 3001;
-    await fastify.listen({ 
-      port, 
-      host: '0.0.0.0' 
-    });
-    console.log(`Servidor iniciado en puerto ${port}`);
+    if (!process.env.VERCEL) {
+      const port = process.env.PORT || 3001;
+      await fastify.listen({ 
+        port, 
+        host: '0.0.0.0' 
+      });
+      console.log(`Servidor iniciado en puerto ${port}`);
+    }
   } catch (err) {
     console.error('Error starting server:', err);
     process.exit(1);
@@ -64,7 +78,7 @@ const start = async () => {
 };
 
 // Exportar para Vercel
-exports.default = async (req, res) => {
+module.exports = async (req, res) => {
   await fastify.ready();
   fastify.server.emit('request', req, res);
 };
