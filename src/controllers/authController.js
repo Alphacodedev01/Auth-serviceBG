@@ -25,7 +25,10 @@ const register = async (request, reply) => {
       direccion
     });
 
-    await user.save();
+    console.log("Guardando usuario en MongoDB...", user);
+await user.save();
+console.log("Usuario guardado correctamente en MongoDB.");
+
 
     return {
       statusCode: 201,
