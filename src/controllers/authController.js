@@ -11,12 +11,10 @@ const register = async (request, reply) => {
     const { email, password, nombre, cedula, edad, telefono, direccion } = request.body;
 
     // Crear usuario en Firebase
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const firebaseUid = userCredential.user.uid;
-
+    const userCredential = await createUserWithEmailAndPassword(email, password);
+    
     // Crear usuario en MongoDB
     const user = new User({
-      firebaseUid,
       email,
       nombre,
       cedula,
@@ -34,7 +32,6 @@ console.log("Usuario guardado correctamente en MongoDB.");
       statusCode: 201,
       message: 'Usuario registrado exitosamente',
       user: {
-        uid: firebaseUid,
         email,
         nombre
       }
